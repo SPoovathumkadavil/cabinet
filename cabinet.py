@@ -484,9 +484,12 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
     top: 14px;
     right: 18px;
     display: inline-flex;
-    gap: 0;
+    gap: 6px;
     z-index: 1000;
-    background: FloralWhite;
+    background: rgba(255, 250, 240, 0.9);
+    border: 1px solid rgba(37, 29, 22, 0.18);
+    border-radius: 999px;
+    padding: 4px;
     font-family: "ETBembo", "Palatino Linotype", Palatino, Georgia, serif;
     transition: transform 160ms ease, opacity 160ms ease;
   }
@@ -496,20 +499,28 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
   }
   .cabinet-home-floating,
   .cabinet-notes-toggle {
-    color: Maroon;
-    background: transparent;
-    border: 0;
-    padding: 5px 8px;
+    color: #6d6258;
+    background: rgba(255, 255, 255, 0.32);
+    border: 1px solid rgba(37, 29, 22, 0.18);
+    border-radius: 999px;
+    padding: 4px 10px;
     text-decoration: none;
     font: inherit;
+    font-size: 0.9rem;
     cursor: pointer;
   }
+  .cabinet-home-floating:hover,
+  .cabinet-notes-toggle:hover {
+    color: Maroon;
+    border-color: rgba(37, 29, 22, 0.32);
+  }
   .cabinet-notes-toggle {
-    border-left: 1px solid rgba(37, 29, 22, 0.18);
+    margin-left: 0;
   }
   .cabinet-home-floating:focus,
   .cabinet-notes-toggle:focus {
     outline: 0;
+    border-color: rgba(37, 29, 22, 0.45);
   }
   #cabinet-sidebar-notes {
     grid-column: screen-start / body-start;
@@ -526,29 +537,13 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
   }
   #cabinet-sidebar-notes h2,
   .cabinet-notes-panel h2 {
-    color: #6d6258;
-    font-size: 0.82rem;
-    font-weight: 400;
-    margin: 0 0 0.4rem;
-    text-transform: none;
+    margin: 0 0 0.6rem;
   }
   #cabinet-sidebar-notes ul,
   .cabinet-notes-panel ul {
     list-style: none;
     margin: 0;
     padding: 0;
-  }
-  #cabinet-sidebar-notes .nav-link,
-  .cabinet-notes-panel .nav-link {
-    color: Maroon;
-    padding: 0.18rem 0.2rem;
-    text-decoration: none;
-    font-size: 0.8rem;
-    line-height: 1.2;
-  }
-  #cabinet-sidebar-notes .nav-link.active,
-  .cabinet-notes-panel .nav-link.active {
-    color: Maroon;
   }
   .cabinet-notes-panel {
     position: fixed;
@@ -695,45 +690,46 @@ def generate_index(notes: list[Note]) -> None:
       align-items: start;
     }}
     .note-tree {{
-      padding: 0 18px;
+      padding: 0;
     }}
     .home-folder {{
-      margin: 0 0 42px;
+      margin: 0 0 20px;
     }}
     .home-folder h2,
     .home-folder h3,
     .home-folder h4,
     .home-folder h5,
     .home-folder h6 {{
-      margin: 0 0 18px;
+      margin: 0 0 8px;
+      text-align: left;
       color: var(--ink);
       font-weight: 400;
       line-height: 1.1;
       letter-spacing: 0;
     }}
     .home-folder h2 {{
-      font-size: 2.5rem;
+      font-size: 1.45rem;
     }}
     .home-folder h3 {{
-      font-size: 2rem;
-      margin-left: 18px;
+      font-size: 1.2rem;
+      margin-left: 0;
     }}
     .home-folder h4,
     .home-folder h5,
     .home-folder h6 {{
-      font-size: 1.55rem;
-      margin-left: 36px;
+      font-size: 1.05rem;
+      margin-left: 0;
     }}
     .home-notes {{
-      margin: 0 0 34px;
+      margin: 0 0 14px;
       padding: 0;
       list-style: none;
     }}
     .home-note > a {{
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
-      gap: 20px;
-      padding: 18px 24px;
+      gap: 10px;
+      padding: 6px 0;
       color: inherit;
       text-decoration: none;
     }}
@@ -741,13 +737,26 @@ def generate_index(notes: list[Note]) -> None:
       color: var(--accent);
     }}
     .home-note span {{
-      font-size: 1.35rem;
+      font-size: 1.02rem;
     }}
     .home-note small {{
       align-self: center;
       color: var(--muted);
-      font-size: 0.95rem;
+      font-size: 0.82rem;
       white-space: nowrap;
+    }}
+    .home-load-more {{
+      margin: 0 0 14px;
+      padding: 4px 10px;
+      border: 1px solid var(--rule);
+      background: rgba(255, 255, 255, 0.35);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }}
+    .home-load-more:hover {{
+      color: var(--accent);
     }}
     .latest {{
       padding-left: 22px;
@@ -785,9 +794,9 @@ def generate_index(notes: list[Note]) -> None:
       border-bottom: 1px solid var(--rule);
     }}
     .graph-section {{
-      margin-top: 34px;
-      border-top: 1px solid var(--rule);
-      padding-top: 34px;
+      margin-top: 0;
+      border-top: 0;
+      padding-top: 12px;
     }}
     .graph-section h2 {{
       margin: 0 0 8px;
@@ -803,14 +812,14 @@ def generate_index(notes: list[Note]) -> None:
     .graph-layout {{
       display: grid;
       grid-template-columns: minmax(0, 1fr) 220px;
-      gap: 22px;
+      gap: 14px;
       align-items: start;
     }}
     .graph-canvas {{
       width: 100%;
       height: 420px;
       border: 1px solid var(--rule);
-      background: rgba(255, 255, 255, 0.4);
+      background: var(--paper);
       display: block;
       cursor: grab;
     }}
@@ -848,12 +857,12 @@ def generate_index(notes: list[Note]) -> None:
         padding-left: 0;
       }}
       .note-tree {{
-        padding: 0 8px;
+        padding: 0;
       }}
       .home-note > a {{
         grid-template-columns: 1fr;
         gap: 4px;
-        padding: 16px 14px;
+        padding: 4px 0;
       }}
       .home-note small {{
         white-space: normal;
@@ -889,28 +898,69 @@ def generate_index(notes: list[Note]) -> None:
       <div class="graph-layout">
         <canvas id="wiki-graph" class="graph-canvas" aria-label="Wiki link graph canvas"></canvas>
         <form class="graph-controls" id="graph-controls">
-          <label>Center force <span class="value" id="center-force-value"></span><input id="center-force" type="range" min="0" max="0.08" step="0.001" value="0.018"></label>
-          <label>Repel force <span class="value" id="repel-force-value"></span><input id="repel-force" type="range" min="50" max="3000" step="10" value="900"></label>
-          <label>Link force <span class="value" id="link-force-value"></span><input id="link-force" type="range" min="0.01" max="0.5" step="0.01" value="0.08"></label>
-          <label>Link distance <span class="value" id="link-distance-value"></span><input id="link-distance" type="range" min="20" max="260" step="2" value="120"></label>
+          <label>Center force <span class="value" id="center-force-value"></span><input id="center-force" type="range" min="0" max="1" step="0.01" value="0.23"></label>
+          <label>Repel force <span class="value" id="repel-force-value"></span><input id="repel-force" type="range" min="0" max="1" step="0.01" value="0.29"></label>
+          <label>Link force <span class="value" id="link-force-value"></span><input id="link-force" type="range" min="0" max="1" step="0.01" value="0.14"></label>
+          <label>Link distance <span class="value" id="link-distance-value"></span><input id="link-distance" type="range" min="0" max="1" step="0.01" value="0.42"></label>
         </form>
       </div>
     </section>
   </main>
   <script>
     const search = document.getElementById('note-search');
-    const notes = Array.from(document.querySelectorAll('.home-note'));
-    search.addEventListener('input', () => {{
+    const noteLists = Array.from(document.querySelectorAll('.home-notes'));
+    const visibleLimits = new Set();
+    const NOTE_BATCH = 102;
+    noteLists.forEach((list, index) => {{
+      list.dataset.listId = String(index);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'home-load-more';
+      button.hidden = true;
+      button.dataset.forList = String(index);
+      button.addEventListener('click', () => {{
+        visibleLimits.add(String(index));
+        applyHomeFilters();
+      }});
+      list.insertAdjacentElement('afterend', button);
+    }});
+    const applyHomeFilters = () => {{
       const value = search.value.trim().toLowerCase();
-      notes.forEach((note) => {{
-        const match = !value || note.dataset.search.includes(value);
-        note.hidden = !match;
+      const searching = Boolean(value);
+      noteLists.forEach((list) => {{
+        const listId = list.dataset.listId;
+        const expanded = visibleLimits.has(listId);
+        const items = Array.from(list.querySelectorAll(':scope > .home-note'));
+        const loadMoreButton = list.nextElementSibling?.classList.contains('home-load-more') ? list.nextElementSibling : null;
+        let visibleCount = 0;
+        let hiddenByLimit = 0;
+        items.forEach((note) => {{
+          const matches = !value || note.dataset.search.includes(value);
+          if (!matches) {{
+            note.hidden = true;
+            return;
+          }}
+          if (!searching && !expanded && visibleCount >= NOTE_BATCH) {{
+            note.hidden = true;
+            hiddenByLimit += 1;
+            return;
+          }}
+          note.hidden = false;
+          visibleCount += 1;
+        }});
+        if (loadMoreButton) {{
+          loadMoreButton.hidden = searching || expanded || hiddenByLimit === 0;
+          loadMoreButton.textContent = `+${{hiddenByLimit}}`;
+        }}
       }});
       document.querySelectorAll('.home-folder').forEach((folder) => {{
         const visibleNote = folder.querySelector('.home-note:not([hidden])');
-        folder.hidden = value && !visibleNote;
+        const visibleSubfolder = folder.querySelector('.home-folder:not([hidden])');
+        folder.hidden = !visibleNote && !visibleSubfolder;
       }});
-    }});
+    }};
+    search.addEventListener('input', applyHomeFilters);
+    applyHomeFilters();
     const graphData = {graph_data};
     const canvas = document.getElementById('wiki-graph');
     const controls = {{
@@ -954,18 +1004,30 @@ def generate_index(notes: list[Note]) -> None:
       let height = 0;
       let hoverNode = null;
       let dragNode = null;
+      let suppressClick = false;
+      let dragStart = null;
+      const scales = {{
+        centerForce: {{ min: 0, max: 0.08 }},
+        repelForce: {{ min: 50, max: 3000 }},
+        linkForce: {{ min: 0.01, max: 0.5 }},
+        linkDistance: {{ min: 20, max: 260 }}
+      }};
+      const scaledParamValue = (key, value) => {{
+        const range = scales[key];
+        return range.min + (range.max - range.min) * value;
+      }};
       const params = {{
-        centerForce: Number(controls.centerForce.value),
-        repelForce: Number(controls.repelForce.value),
-        linkForce: Number(controls.linkForce.value),
-        linkDistance: Number(controls.linkDistance.value),
+        centerForce: scaledParamValue('centerForce', Number(controls.centerForce.value)),
+        repelForce: scaledParamValue('repelForce', Number(controls.repelForce.value)),
+        linkForce: scaledParamValue('linkForce', Number(controls.linkForce.value)),
+        linkDistance: scaledParamValue('linkDistance', Number(controls.linkDistance.value)),
         damping: 0.86
       }};
       const updateControlLabels = () => {{
-        controls.centerForceValue.textContent = params.centerForce.toFixed(3);
-        controls.repelForceValue.textContent = Math.round(params.repelForce).toString();
-        controls.linkForceValue.textContent = params.linkForce.toFixed(2);
-        controls.linkDistanceValue.textContent = Math.round(params.linkDistance).toString();
+        controls.centerForceValue.textContent = Number(controls.centerForce.value).toFixed(2);
+        controls.repelForceValue.textContent = Number(controls.repelForce.value).toFixed(2);
+        controls.linkForceValue.textContent = Number(controls.linkForce.value).toFixed(2);
+        controls.linkDistanceValue.textContent = Number(controls.linkDistance.value).toFixed(2);
       }};
       const resize = () => {{
         const rect = canvas.getBoundingClientRect();
@@ -1080,6 +1142,7 @@ def generate_index(notes: list[Note]) -> None:
         const pos = pointer(event);
         hoverNode = findNode(pos.x, pos.y);
         if (dragNode) {{
+          if (dragStart && Math.hypot(pos.x - dragStart.x, pos.y - dragStart.y) > 2) suppressClick = true;
           dragNode.x = pos.x;
           dragNode.y = pos.y;
           dragNode.vx = 0;
@@ -1088,6 +1151,8 @@ def generate_index(notes: list[Note]) -> None:
       }});
       canvas.addEventListener('mousedown', (event) => {{
         const pos = pointer(event);
+        suppressClick = false;
+        dragStart = pos;
         dragNode = findNode(pos.x, pos.y);
         if (dragNode) {{
           dragNode.fixed = true;
@@ -1098,8 +1163,13 @@ def generate_index(notes: list[Note]) -> None:
       window.addEventListener('mouseup', () => {{
         if (dragNode) dragNode.fixed = false;
         dragNode = null;
+        dragStart = null;
       }});
       canvas.addEventListener('click', (event) => {{
+        if (suppressClick) {{
+          suppressClick = false;
+          return;
+        }}
         const pos = pointer(event);
         const node = findNode(pos.x, pos.y);
         if (node) window.location.href = `${{node.id}}/index.html`;
@@ -1111,7 +1181,7 @@ def generate_index(notes: list[Note]) -> None:
         linkDistance: controls.linkDistance
       }})) {{
         input.addEventListener('input', () => {{
-          params[key] = Number(input.value);
+          params[key] = scaledParamValue(key, Number(input.value));
           updateControlLabels();
         }});
       }}
