@@ -144,6 +144,49 @@ def resolve_note_ref(ref: str, current: Note, by_slug: dict[str, Note], by_name:
     raise SystemExit(f"Unknown note link in {current.slug}: {ref}")
 
 
+def try_resolve_note_ref(ref: str, current: Note, by_slug: dict[str, Note], by_name: dict[str, list[Note]]) -> Note | None:
+    try:
+        return resolve_note_ref(ref, current, by_slug, by_name)
+    except SystemExit:
+        return None
+
+
+def resolve_wiki_link_target(raw: str, current: Note, by_slug: dict[str, Note], by_name: dict[str, list[Note]]) -> Note | None:
+    if "|" in raw:
+        left, right = [part.strip() for part in raw.split("|", 1)]
+        left_note = try_resolve_note_ref(left, current, by_slug, by_name)
+        right_note = try_resolve_note_ref(right, current, by_slug, by_name)
+        if right_note is not None:
+            return right_note
+        if left_note is not None:
+            return left_note
+        return None
+    return try_resolve_note_ref(raw.strip(), current, by_slug, by_name)
+
+
+def wiki_link_graph_data(notes: list[Note]) -> dict[str, list[dict[str, str]]]:
+    by_slug = notes_by_slug(notes)
+    by_name = notes_by_basename(notes)
+    nodes = [
+        {
+            "id": note.slug,
+            "title": note.title,
+            "group": note.slug.split("/", 1)[0] if "/" in note.slug else "unmarked",
+        }
+        for note in sorted(notes, key=lambda item: item.slug)
+    ]
+    edges: set[tuple[str, str]] = set()
+    for note in notes:
+        text = (note.path / "index.qmd").read_text(encoding="utf-8")
+        for match in re.finditer(r"\[\[([^\]\n]+)\]\]", text):
+            target = resolve_wiki_link_target(match.group(1).strip(), note, by_slug, by_name)
+            if target is None:
+                continue
+            edges.add((note.slug, target.slug))
+    links = [{"source": source, "target": target} for source, target in sorted(edges)]
+    return {"nodes": nodes, "links": links}
+
+
 def wiki_link_replacer(current: Note, notes: list[Note]):
     by_slug = notes_by_slug(notes)
     by_name = notes_by_basename(notes)
@@ -152,16 +195,8 @@ def wiki_link_replacer(current: Note, notes: list[Note]):
         raw = match.group(1).strip()
         if "|" in raw:
             left, right = [part.strip() for part in raw.split("|", 1)]
-            left_note = None
-            right_note = None
-            try:
-                left_note = resolve_note_ref(left, current, by_slug, by_name)
-            except SystemExit:
-                pass
-            try:
-                right_note = resolve_note_ref(right, current, by_slug, by_name)
-            except SystemExit:
-                pass
+            right_note = try_resolve_note_ref(right, current, by_slug, by_name)
+            left_note = try_resolve_note_ref(left, current, by_slug, by_name)
             if right_note is not None:
                 label, target = left, right_note
             elif left_note is not None:
@@ -492,14 +527,13 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
   #cabinet-sidebar-notes h2,
   .cabinet-notes-panel h2 {
     color: #6d6258;
-    font-size: 0.86rem;
+    font-size: 0.82rem;
     font-weight: 400;
     margin: 0 0 0.4rem;
     text-transform: none;
   }
   #cabinet-sidebar-notes ul,
   .cabinet-notes-panel ul {
-    border-left: 1px solid rgba(128, 0, 0, 0.25);
     list-style: none;
     margin: 0;
     padding: 0;
@@ -507,16 +541,14 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
   #cabinet-sidebar-notes .nav-link,
   .cabinet-notes-panel .nav-link {
     color: Maroon;
-    padding: 0.18rem 0.55rem;
+    padding: 0.18rem 0.2rem;
     text-decoration: none;
-    font-size: 0.86rem;
+    font-size: 0.8rem;
     line-height: 1.2;
   }
   #cabinet-sidebar-notes .nav-link.active,
   .cabinet-notes-panel .nav-link.active {
     color: Maroon;
-    border-left: 1px solid Maroon;
-    margin-left: -1px;
   }
   .cabinet-notes-panel {
     position: fixed;
@@ -602,6 +634,7 @@ def generate_index(notes: list[Note]) -> None:
         return f"{value.strftime('%b')} {value.day}, {value.year}"
 
     tree_html = render_home_sections(notes)
+    graph_data = json.dumps(wiki_link_graph_data(notes), ensure_ascii=False)
     latest = "\n".join(
         f"""        <li><a href="{html.escape(note.slug)}/index.html">{html.escape(note.title)}</a><span>{display_date(note.modified)}</span></li>"""
         for note in sorted(notes, key=lambda item: item.modified, reverse=True)[:5]
@@ -751,6 +784,56 @@ def generate_index(notes: list[Note]) -> None:
       color: var(--muted);
       border-bottom: 1px solid var(--rule);
     }}
+    .graph-section {{
+      margin-top: 34px;
+      border-top: 1px solid var(--rule);
+      padding-top: 34px;
+    }}
+    .graph-section h2 {{
+      margin: 0 0 8px;
+      color: var(--ink);
+      font-size: 1.35rem;
+      font-weight: 400;
+    }}
+    .graph-section p {{
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }}
+    .graph-layout {{
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 22px;
+      align-items: start;
+    }}
+    .graph-canvas {{
+      width: 100%;
+      height: 420px;
+      border: 1px solid var(--rule);
+      background: rgba(255, 255, 255, 0.4);
+      display: block;
+      cursor: grab;
+    }}
+    .graph-canvas:active {{
+      cursor: grabbing;
+    }}
+    .graph-controls {{
+      display: grid;
+      gap: 10px;
+    }}
+    .graph-controls label {{
+      display: grid;
+      gap: 4px;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }}
+    .graph-controls .value {{
+      color: var(--ink);
+      font-size: 0.84rem;
+    }}
+    .graph-controls input {{
+      width: 100%;
+    }}
     @media (max-width: 640px) {{
       main {{
         width: min(100vw - 28px, 920px);
@@ -775,6 +858,12 @@ def generate_index(notes: list[Note]) -> None:
       .home-note small {{
         white-space: normal;
       }}
+      .graph-layout {{
+        grid-template-columns: 1fr;
+      }}
+      .graph-canvas {{
+        height: 320px;
+      }}
     }}
   </style>
 </head>
@@ -794,6 +883,19 @@ def generate_index(notes: list[Note]) -> None:
         </ul>
       </aside>
     </div>
+    <section class="graph-section" aria-label="Wiki link graph">
+      <h2>Wiki Link Graph</h2>
+      <p>Explore how notes connect through wiki links. Tune forces to change the layout.</p>
+      <div class="graph-layout">
+        <canvas id="wiki-graph" class="graph-canvas" aria-label="Wiki link graph canvas"></canvas>
+        <form class="graph-controls" id="graph-controls">
+          <label>Center force <span class="value" id="center-force-value"></span><input id="center-force" type="range" min="0" max="0.08" step="0.001" value="0.018"></label>
+          <label>Repel force <span class="value" id="repel-force-value"></span><input id="repel-force" type="range" min="50" max="3000" step="10" value="900"></label>
+          <label>Link force <span class="value" id="link-force-value"></span><input id="link-force" type="range" min="0.01" max="0.5" step="0.01" value="0.08"></label>
+          <label>Link distance <span class="value" id="link-distance-value"></span><input id="link-distance" type="range" min="20" max="260" step="2" value="120"></label>
+        </form>
+      </div>
+    </section>
   </main>
   <script>
     const search = document.getElementById('note-search');
@@ -809,6 +911,215 @@ def generate_index(notes: list[Note]) -> None:
         folder.hidden = value && !visibleNote;
       }});
     }});
+    const graphData = {graph_data};
+    const canvas = document.getElementById('wiki-graph');
+    const controls = {{
+      centerForce: document.getElementById('center-force'),
+      repelForce: document.getElementById('repel-force'),
+      linkForce: document.getElementById('link-force'),
+      linkDistance: document.getElementById('link-distance'),
+      centerForceValue: document.getElementById('center-force-value'),
+      repelForceValue: document.getElementById('repel-force-value'),
+      linkForceValue: document.getElementById('link-force-value'),
+      linkDistanceValue: document.getElementById('link-distance-value')
+    }};
+    if (canvas && graphData.nodes.length) {{
+      const ctx = canvas.getContext('2d');
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const byId = new Map();
+      const palette = ['#e7d4f5', '#d9e4ff', '#d7f2df', '#ffe4cf', '#f6d4dd', '#f9efc7'];
+      const hashColor = (value) => {{
+        let hash = 0;
+        for (let i = 0; i < value.length; i += 1) hash = (hash * 31 + value.charCodeAt(i)) | 0;
+        return palette[Math.abs(hash) % palette.length];
+      }};
+      const nodes = graphData.nodes.map((node, index) => {{
+        const item = {{
+          ...node,
+          x: 40 + (index * 17 % 420),
+          y: 40 + (index * 29 % 320),
+          vx: 0,
+          vy: 0,
+          radius: 7,
+          color: hashColor(node.group),
+          fixed: false
+        }};
+        byId.set(node.id, item);
+        return item;
+      }});
+      const links = graphData.links
+        .map((link) => ({{ source: byId.get(link.source), target: byId.get(link.target) }}))
+        .filter((link) => link.source && link.target);
+      let width = 0;
+      let height = 0;
+      let hoverNode = null;
+      let dragNode = null;
+      const params = {{
+        centerForce: Number(controls.centerForce.value),
+        repelForce: Number(controls.repelForce.value),
+        linkForce: Number(controls.linkForce.value),
+        linkDistance: Number(controls.linkDistance.value),
+        damping: 0.86
+      }};
+      const updateControlLabels = () => {{
+        controls.centerForceValue.textContent = params.centerForce.toFixed(3);
+        controls.repelForceValue.textContent = Math.round(params.repelForce).toString();
+        controls.linkForceValue.textContent = params.linkForce.toFixed(2);
+        controls.linkDistanceValue.textContent = Math.round(params.linkDistance).toString();
+      }};
+      const resize = () => {{
+        const rect = canvas.getBoundingClientRect();
+        width = rect.width;
+        height = rect.height;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }};
+      const findNode = (x, y) => {{
+        let best = null;
+        let bestDist = Infinity;
+        for (const node of nodes) {{
+          const dx = node.x - x;
+          const dy = node.y - y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < node.radius + 4 && dist < bestDist) {{
+            best = node;
+            bestDist = dist;
+          }}
+        }}
+        return best;
+      }};
+      const applyForces = () => {{
+        const centerX = width / 2;
+        const centerY = height / 2;
+        for (let i = 0; i < nodes.length; i += 1) {{
+          const a = nodes[i];
+          for (let j = i + 1; j < nodes.length; j += 1) {{
+            const b = nodes[j];
+            let dx = b.x - a.x;
+            let dy = b.y - a.y;
+            const distSq = Math.max(25, dx * dx + dy * dy);
+            const dist = Math.sqrt(distSq);
+            dx /= dist;
+            dy /= dist;
+            const force = params.repelForce / distSq;
+            const fx = force * dx;
+            const fy = force * dy;
+            if (!a.fixed) {{
+              a.vx -= fx;
+              a.vy -= fy;
+            }}
+            if (!b.fixed) {{
+              b.vx += fx;
+              b.vy += fy;
+            }}
+          }}
+        }}
+        for (const link of links) {{
+          const dx = link.target.x - link.source.x;
+          const dy = link.target.y - link.source.y;
+          const dist = Math.max(1, Math.hypot(dx, dy));
+          const stretch = dist - params.linkDistance;
+          const force = params.linkForce * stretch;
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          if (!link.source.fixed) {{
+            link.source.vx += fx;
+            link.source.vy += fy;
+          }}
+          if (!link.target.fixed) {{
+            link.target.vx -= fx;
+            link.target.vy -= fy;
+          }}
+        }}
+        for (const node of nodes) {{
+          if (node.fixed) continue;
+          node.vx += (centerX - node.x) * params.centerForce;
+          node.vy += (centerY - node.y) * params.centerForce;
+          node.vx *= params.damping;
+          node.vy *= params.damping;
+          node.x += node.vx;
+          node.y += node.vy;
+          node.x = Math.min(width - 10, Math.max(10, node.x));
+          node.y = Math.min(height - 10, Math.max(10, node.y));
+        }}
+      }};
+      const draw = () => {{
+        ctx.clearRect(0, 0, width, height);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(37, 29, 22, 0.25)';
+        for (const link of links) {{
+          ctx.beginPath();
+          ctx.moveTo(link.source.x, link.source.y);
+          ctx.lineTo(link.target.x, link.target.y);
+          ctx.stroke();
+        }}
+        ctx.font = '12px "ETBembo", "Palatino Linotype", Palatino, Georgia, serif';
+        ctx.textBaseline = 'middle';
+        for (const node of nodes) {{
+          ctx.beginPath();
+          ctx.fillStyle = node.color;
+          ctx.arc(node.x, node.y, node.radius + (node === hoverNode ? 1.5 : 0), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(37, 29, 22, 0.35)';
+          ctx.stroke();
+          ctx.fillStyle = '#251d16';
+          ctx.fillText(node.title, node.x + node.radius + 4, node.y);
+        }}
+      }};
+      const tick = () => {{
+        applyForces();
+        draw();
+        window.requestAnimationFrame(tick);
+      }};
+      const pointer = (event) => {{
+        const rect = canvas.getBoundingClientRect();
+        return {{ x: event.clientX - rect.left, y: event.clientY - rect.top }};
+      }};
+      canvas.addEventListener('mousemove', (event) => {{
+        const pos = pointer(event);
+        hoverNode = findNode(pos.x, pos.y);
+        if (dragNode) {{
+          dragNode.x = pos.x;
+          dragNode.y = pos.y;
+          dragNode.vx = 0;
+          dragNode.vy = 0;
+        }}
+      }});
+      canvas.addEventListener('mousedown', (event) => {{
+        const pos = pointer(event);
+        dragNode = findNode(pos.x, pos.y);
+        if (dragNode) {{
+          dragNode.fixed = true;
+          dragNode.x = pos.x;
+          dragNode.y = pos.y;
+        }}
+      }});
+      window.addEventListener('mouseup', () => {{
+        if (dragNode) dragNode.fixed = false;
+        dragNode = null;
+      }});
+      canvas.addEventListener('click', (event) => {{
+        const pos = pointer(event);
+        const node = findNode(pos.x, pos.y);
+        if (node) window.location.href = `${{node.id}}/index.html`;
+      }});
+      for (const [key, input] of Object.entries({{
+        centerForce: controls.centerForce,
+        repelForce: controls.repelForce,
+        linkForce: controls.linkForce,
+        linkDistance: controls.linkDistance
+      }})) {{
+        input.addEventListener('input', () => {{
+          params[key] = Number(input.value);
+          updateControlLabels();
+        }});
+      }}
+      updateControlLabels();
+      resize();
+      window.addEventListener('resize', resize);
+      tick();
+    }}
   </script>
 </body>
 </html>
