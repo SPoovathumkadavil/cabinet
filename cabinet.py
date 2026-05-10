@@ -555,8 +555,8 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
   }
   #cabinet-sidebar-notes ul > li > a.active,
   .cabinet-notes-panel ul > li > a.active {
-    border-left: 1px solid Maroon;
-    color: Maroon !important;
+    border-left: 1px solid maroon;
+    color: maroon !important;
   }
   .cabinet-notes-panel {
     position: fixed;
