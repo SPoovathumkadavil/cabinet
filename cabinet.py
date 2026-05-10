@@ -342,6 +342,15 @@ def folder_label(slug: str) -> str:
     return PurePosixPath(slug).name.replace("-", " ").title()
 
 
+def folder_label_breadcrumb(slug: str) -> str:
+    """Format folder path as breadcrumb for main page (e.g., 'Statistics · Probability')"""
+    if not slug:
+        return "Unmarked"
+    parts = slug.split("/")
+    formatted_parts = [part.replace("-", " ").title() for part in parts]
+    return " · ".join(formatted_parts)
+
+
 def note_groups(notes: list[Note]) -> dict[str, list[Note]]:
     groups: dict[str, list[Note]] = {}
     for note in notes:
@@ -385,7 +394,7 @@ def render_home_sections(notes: list[Note]) -> str:
                 note_html = f"""  <ul class="home-notes">{"".join(render_home_note(note) for note in folder_notes)}</ul>"""
             pieces.append(
                 f"""<section class="home-folder depth-{level}" data-folder="{html.escape(folder or "unmarked")}">
-  <h{heading_level}>{html.escape(folder_label(folder))}</h{heading_level}>
+  <h{heading_level}>{html.escape(folder_label_breadcrumb(folder))}</h{heading_level}>
 {note_html}
 {child_html}
 </section>"""
@@ -526,11 +535,29 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
     grid-column: screen-start / body-start;
     align-self: start;
     margin-top: 0;
-    margin-left: 0.75rem;
+    margin-left: 1.25rem;
     width: 6.75rem;
   }
   #quarto-sidebar-toc-left {
-    margin-left: 9.25rem;
+    width: 6.75rem;
+    margin-left: 8.75rem;
+    margin-right: 0.75rem;
+    padding-right: 0.5rem;
+  }
+  #quarto-sidebar-toc-left nav {
+    padding-top: 0;
+  }
+  #quarto-sidebar-toc-left h2,
+  #quarto-sidebar-toc-left nav h2 {
+    font-size: .875rem;
+    font-weight: normal;
+    line-height: 1.2;
+    margin: 0;
+    border: none;
+  }
+  #quarto-sidebar-toc-left ul {
+    margin: 0;
+    padding: 0;
   }
   #cabinet-sidebar-notes nav {
     padding-top: 0;
@@ -538,11 +565,20 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
   #cabinet-sidebar-notes h2,
   .cabinet-notes-panel h2 {
     font-size: .875rem;
-    margin: 0 0 0.6rem;
+    font-weight: normal;
+    line-height: 1.2;
+    margin: 0;
+    border: none;
   }
   #cabinet-sidebar-notes ul,
   .cabinet-notes-panel ul {
     list-style: none;
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+  #cabinet-sidebar-notes ul > li,
+  .cabinet-notes-panel ul > li {
     margin: 0;
     padding: 0;
   }
@@ -550,6 +586,8 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
   .cabinet-notes-panel ul > li > a {
     border-left: 1px solid #e9ecef;
     padding-left: .6rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
     font-size: .875rem;
     display: block;
   }
@@ -582,6 +620,33 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
     }
     #quarto-sidebar-toc-left {
       margin-left: 0;
+    }
+  }
+  @media print {
+    #cabinet-sidebar-notes,
+    #quarto-sidebar-toc-left,
+    #cabinet-floating-controls {
+      display: none !important;
+    }
+    /* Force white background for printing and remove decorative backgrounds */
+    html, body, main, .content, .quarto-banner-title-block, .cabinet-notes-panel, .sidebar {
+      background: white !important;
+      background-color: white !important;
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    /* Remove background images, shadows, and heavy decorations */
+    * {
+      background-image: none !important;
+      box-shadow: none !important;
+    }
+    main {
+      margin-left: 0 !important;
+    }
+    /* Ensure links are legible in print */
+    a, a:link, a:visited {
+      color: black !important;
+      text-decoration: underline !important;
     }
   }
 </style>
@@ -734,7 +799,7 @@ def generate_index(notes: list[Note]) -> None:
       margin-left: 0;
     }}
     .home-notes {{
-      margin: 0 0 14px;
+      margin: 0 0 8px;
       padding: 0;
       list-style: none;
     }}
@@ -742,7 +807,7 @@ def generate_index(notes: list[Note]) -> None:
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 10px;
-      padding: 6px 0;
+      padding: 2px 0;
       color: inherit;
       text-decoration: none;
     }}
@@ -750,7 +815,7 @@ def generate_index(notes: list[Note]) -> None:
       color: var(--accent);
     }}
     .home-note span {{
-      font-size: 1.02rem;
+      font-size: 0.95rem;
     }}
     .home-note small {{
       align-self: center;
