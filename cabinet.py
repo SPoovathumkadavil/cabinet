@@ -910,7 +910,7 @@ def generate_index(notes: list[Note]) -> None:
     const search = document.getElementById('note-search');
     const noteLists = Array.from(document.querySelectorAll('.home-notes'));
     const visibleLimits = new Set();
-    const NOTE_BATCH = 102;
+    const INITIAL_NOTES_PER_FOLDER = 100;
     noteLists.forEach((list, index) => {{
       list.dataset.listId = String(index);
       const button = document.createElement('button');
@@ -931,7 +931,8 @@ def generate_index(notes: list[Note]) -> None:
         const listId = list.dataset.listId;
         const expanded = visibleLimits.has(listId);
         const items = Array.from(list.querySelectorAll(':scope > .home-note'));
-        const loadMoreButton = list.nextElementSibling?.classList.contains('home-load-more') ? list.nextElementSibling : null;
+        const nextElement = list.nextElementSibling;
+        const loadMoreButton = nextElement?.classList.contains('home-load-more') ? nextElement : null;
         let visibleCount = 0;
         let hiddenByLimit = 0;
         items.forEach((note) => {{
@@ -940,7 +941,7 @@ def generate_index(notes: list[Note]) -> None:
             note.hidden = true;
             return;
           }}
-          if (!searching && !expanded && visibleCount >= NOTE_BATCH) {{
+          if (!searching && !expanded && visibleCount >= INITIAL_NOTES_PER_FOLDER) {{
             note.hidden = true;
             hiddenByLimit += 1;
             return;
@@ -1006,6 +1007,7 @@ def generate_index(notes: list[Note]) -> None:
       let dragNode = null;
       let suppressClick = false;
       let dragStart = null;
+      const DRAG_CLICK_THRESHOLD_PX = 2;
       const scales = {{
         centerForce: {{ min: 0, max: 0.08 }},
         repelForce: {{ min: 50, max: 3000 }},
@@ -1138,11 +1140,12 @@ def generate_index(notes: list[Note]) -> None:
         const rect = canvas.getBoundingClientRect();
         return {{ x: event.clientX - rect.left, y: event.clientY - rect.top }};
       }};
+      const distanceBetween = (from, to) => Math.hypot(to.x - from.x, to.y - from.y);
       canvas.addEventListener('mousemove', (event) => {{
         const pos = pointer(event);
         hoverNode = findNode(pos.x, pos.y);
         if (dragNode) {{
-          if (dragStart && Math.hypot(pos.x - dragStart.x, pos.y - dragStart.y) > 2) suppressClick = true;
+          if (dragStart && distanceBetween(dragStart, pos) > DRAG_CLICK_THRESHOLD_PX) suppressClick = true;
           dragNode.x = pos.x;
           dragNode.y = pos.y;
           dragNode.vx = 0;
