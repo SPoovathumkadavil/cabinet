@@ -530,13 +530,14 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
     width: 6.75rem;
   }
   #quarto-sidebar-toc-left {
-    margin-left: 7.75rem;
+    margin-left: 9.25rem;
   }
   #cabinet-sidebar-notes nav {
     padding-top: 0;
   }
   #cabinet-sidebar-notes h2,
   .cabinet-notes-panel h2 {
+    font-size: .875rem;
     margin: 0 0 0.6rem;
   }
   #cabinet-sidebar-notes ul,
@@ -544,6 +545,18 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
     list-style: none;
     margin: 0;
     padding: 0;
+  }
+  #cabinet-sidebar-notes ul > li > a,
+  .cabinet-notes-panel ul > li > a {
+    border-left: 1px solid #e9ecef;
+    padding-left: .6rem;
+    font-size: .875rem;
+    display: block;
+  }
+  #cabinet-sidebar-notes ul > li > a.active,
+  .cabinet-notes-panel ul > li > a.active {
+    border-left: 1px solid Maroon;
+    color: Maroon !important;
   }
   .cabinet-notes-panel {
     position: fixed;
