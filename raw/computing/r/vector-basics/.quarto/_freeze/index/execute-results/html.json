@@ -1,0 +1,15 @@
+{
+  "hash": "d480c184f7b2e27832c994ccc2268024",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Vector Basics\"\ndocumenttype: Handout\nauthor:\n  - name: Saaleh Poovathumkadavil\ntoc: true\nabstract: \"A practical R note for vectors, indexing, missing values, and small examples used by the statistics notes.\"\n\nversion: [v.1.0]\ndate: last-modified\nexecute:\n  echo: fenced\n  freeze: auto\nbibliography: references.bib\nbibliographystyle: \"springer-humanities-author-date\"\nformat:\n  tufte-inspired-html: default\n---\n\n\n# Vectors\n\nVectors are the basic one-dimensional data structure in R. They are useful for\nsmall probability examples and regression inputs.\n\n\n::: {.cell}\n\n```{.r .cell-code}\nx <- c(2, 3, 5, 7)\nx[x > 3]\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] 5 7\n```\n\n\n:::\n:::\n\n\nUse this with [Linear Models](../../../statistics/regression/linear-models/index.html) and\n[Random Variables](../../../statistics/probability/random-variables/index.html).\n\n# Missing Values\n\nMissing values are represented with `NA`.\n\n\n::: {.cell}\n\n```{.r .cell-code}\ny <- c(1, NA, 4)\ny[!is.na(y)]\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] 1 4\n```\n\n\n:::\n:::\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

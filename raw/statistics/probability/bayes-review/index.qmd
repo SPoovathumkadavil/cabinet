@@ -1,0 +1,38 @@
+---
+title: "Bayes Review"
+documenttype: Handout
+author:
+  - name: Saaleh Poovathumkadavil
+toc: true
+abstract: "A compact review note for conditional probability, Bayes' rule, and how evidence updates a prior belief."
+
+version: [v.1.0]
+date: last-modified
+execute:
+  echo: fenced
+  freeze: auto
+bibliography: references.bib
+bibliographystyle: "springer-humanities-author-date"
+format:
+  tufte-inspired-html: default
+---
+
+
+# Bayes' Rule
+
+Bayes' rule rewrites a conditional probability in terms of the reverse
+condition:
+
+$$
+P(A \mid B)=\frac{P(B \mid A)P(A)}{P(B)}.
+$$
+
+Use [[Random Variables|statistics/probability/random-variables]] when the
+events come from named measurements, and compare with
+[[Linear Models|statistics/regression/linear-models]] when evidence enters a
+prediction problem.
+
+# Diagnostic Tests
+
+For diagnostic testing, the base rate matters. A high sensitivity test can
+still produce many false positives if the event is rare.

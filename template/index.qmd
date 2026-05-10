@@ -1,0 +1,22 @@
+---
+title: "{{ title }}"
+documenttype: Handout
+author:
+  - name: {{ author }}
+toc: true
+
+version: [v.1.0]
+date: last-modified
+execute:
+  echo: fenced
+  freeze: auto
+bibliography: references.bib
+bibliographystyle: "springer-humanities-author-date"
+format:
+  tufte-inspired-html: default
+---
+
+
+# {{ title }}
+
+Start writing here.
