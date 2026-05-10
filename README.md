@@ -97,9 +97,10 @@ During `python3 cabinet.py build`, `cabinet.py` temporarily preprocesses these l
 ## Navigation
 
 - The home page displays notes as a folder tree and includes a search bar.
+- The home page includes a wiki-link graph view with adjustable center, repel, link, and link-distance forces.
 - Notes directly under `raw/` are grouped under `Unmarked`.
 - Each rendered note gets a Home button.
-- Each rendered note gets a Contents-style notes list for the current note folder. On smaller screens, the list moves into the floating Notes menu beside Home.
+- Each rendered note gets a compact Contents-style notes list for the current note folder. On smaller screens, the list moves into the floating Notes menu beside Home.
 
 ## Examples
 
