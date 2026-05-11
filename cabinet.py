@@ -535,14 +535,16 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
     grid-column: screen-start / body-start;
     align-self: start;
     margin-top: 0;
-    margin-left: 1.25rem;
-    width: 6.75rem;
+    margin-left: 1rem;
+    margin-right: 0.5rem;
+    width: 7.25rem;
   }
   #quarto-sidebar-toc-left {
-    width: 6.75rem;
-    margin-left: 8.75rem;
-    margin-right: 0.75rem;
-    padding-right: 0.5rem;
+    width: 7.5rem;
+    margin-left: 8rem;
+    margin-right: 2.25rem;
+    padding-left: 0.35rem;
+    padding-right: 0.75rem;
   }
   #quarto-sidebar-toc-left nav {
     padding-top: 0;
