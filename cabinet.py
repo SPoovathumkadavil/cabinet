@@ -19,7 +19,6 @@ from pathlib import Path, PurePosixPath
 
 
 ROOT = Path(__file__).resolve().parent
-RAW_DIR = ROOT / "raw"
 TEMPLATE_DIR = ROOT / "template"
 SITE_DIR = ROOT / "site"
 NOTE_OUTPUT_DIR = "_manuscript"
@@ -61,8 +60,6 @@ def slugify_segment(value: str) -> str:
 
 def normalize_note_path(value: str) -> str:
     value = value.strip().strip("/")
-    value = re.sub(r"^raw/", "", value)
-    value = re.sub(r"^site/", "", value)
     value = re.sub(r"/index(?:\.qmd|\.html)?$", "", value)
     value = re.sub(r"\.qmd$", "", value)
     value = re.sub(r"\.html$", "", value)
@@ -72,12 +69,14 @@ def normalize_note_path(value: str) -> str:
     return "/".join(parts)
 
 
-def note_dirs() -> list[Path]:
-    if not RAW_DIR.exists():
+def note_dirs(note_root: Path) -> list[Path]:
+    if not note_root.is_dir():
         return []
     dirs: list[Path] = []
-    for index in RAW_DIR.rglob("index.qmd"):
-        relative_parts = index.relative_to(RAW_DIR).parts[:-1]
+    for index in note_root.rglob("index.qmd"):
+        if TEMPLATE_DIR in index.parents:
+            continue
+        relative_parts = index.relative_to(note_root).parts[:-1]
         if any(part.startswith(".") or part.startswith("_") for part in relative_parts):
             continue
         dirs.append(index.parent)
@@ -231,13 +230,13 @@ def preprocess_wiki_links(note: Note, notes: list[Note]) -> None:
         backup.replace(index)
 
 
-def discover_notes() -> list[Note]:
+def discover_notes(note_root: Path) -> list[Note]:
     notes: list[Note] = []
-    for note_dir in note_dirs():
+    for note_dir in note_dirs(note_root):
         title, author = metadata_from_qmd(note_dir)
         notes.append(
             Note(
-                slug=note_dir.relative_to(RAW_DIR).as_posix(),
+                slug=note_dir.relative_to(note_root).as_posix(),
                 path=note_dir,
                 title=title,
                 author=author,
@@ -247,14 +246,15 @@ def discover_notes() -> list[Note]:
     return notes
 
 
-def copy_template(note_path: str, title: str, author: str, force: bool = False) -> Path:
-    target = RAW_DIR / Path(*note_path.split("/"))
+def copy_template(note_root: Path, note_path: str, title: str, author: str, force: bool = False) -> Path:
+    target = note_root / Path(*note_path.split("/"))
     if target.exists() and not force:
         raise SystemExit(f"Note already exists: {target}")
     if not TEMPLATE_DIR.is_dir():
         raise SystemExit(f"Missing template directory: {TEMPLATE_DIR}")
     if target.exists():
         shutil.rmtree(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(TEMPLATE_DIR, target)
     index = target / "index.qmd"
     text = index.read_text(encoding="utf-8")
@@ -264,7 +264,7 @@ def copy_template(note_path: str, title: str, author: str, force: bool = False) 
 
 
 def render_note(note_dir: Path) -> None:
-    print(f"Rendering {note_dir.relative_to(ROOT)}", flush=True)
+    print(f"Rendering {note_dir}", flush=True)
     run(["quarto", "render", "."], cwd=note_dir)
 
 
@@ -342,6 +342,15 @@ def folder_label(slug: str) -> str:
     return PurePosixPath(slug).name.replace("-", " ").title()
 
 
+def folder_label_breadcrumb(slug: str) -> str:
+    """Format folder path as breadcrumb for main page (e.g., 'Statistics · Probability')"""
+    if not slug:
+        return "Unmarked"
+    parts = slug.split("/")
+    formatted_parts = [part.replace("-", " ").title() for part in parts]
+    return " · ".join(formatted_parts)
+
+
 def note_groups(notes: list[Note]) -> dict[str, list[Note]]:
     groups: dict[str, list[Note]] = {}
     for note in notes:
@@ -385,7 +394,7 @@ def render_home_sections(notes: list[Note]) -> str:
                 note_html = f"""  <ul class="home-notes">{"".join(render_home_note(note) for note in folder_notes)}</ul>"""
             pieces.append(
                 f"""<section class="home-folder depth-{level}" data-folder="{html.escape(folder or "unmarked")}">
-  <h{heading_level}>{html.escape(folder_label(folder))}</h{heading_level}>
+  <h{heading_level}>{html.escape(folder_label_breadcrumb(folder))}</h{heading_level}>
 {note_html}
 {child_html}
 </section>"""
@@ -526,24 +535,68 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
     grid-column: screen-start / body-start;
     align-self: start;
     margin-top: 0;
-    margin-left: 0.75rem;
-    width: 6.75rem;
+    margin-left: 1rem;
+    margin-right: 0.5rem;
+    width: 7.25rem;
   }
   #quarto-sidebar-toc-left {
-    margin-left: 7.75rem;
+    width: 7.5rem;
+    margin-left: 8rem;
+    margin-right: 2.25rem;
+    padding-left: 0.35rem;
+    padding-right: 0.75rem;
+  }
+  #quarto-sidebar-toc-left nav {
+    padding-top: 0;
+  }
+  #quarto-sidebar-toc-left h2,
+  #quarto-sidebar-toc-left nav h2 {
+    font-size: .875rem;
+    font-weight: normal;
+    line-height: 1.2;
+    margin: 0;
+    border: none;
+  }
+  #quarto-sidebar-toc-left ul {
+    margin: 0;
+    padding: 0;
   }
   #cabinet-sidebar-notes nav {
     padding-top: 0;
   }
   #cabinet-sidebar-notes h2,
   .cabinet-notes-panel h2 {
-    margin: 0 0 0.6rem;
+    font-size: .875rem;
+    font-weight: normal;
+    line-height: 1.2;
+    margin: 0;
+    border: none;
   }
   #cabinet-sidebar-notes ul,
   .cabinet-notes-panel ul {
     list-style: none;
     margin: 0;
     padding: 0;
+    border: none;
+  }
+  #cabinet-sidebar-notes ul > li,
+  .cabinet-notes-panel ul > li {
+    margin: 0;
+    padding: 0;
+  }
+  #cabinet-sidebar-notes ul > li > a,
+  .cabinet-notes-panel ul > li > a {
+    border-left: 1px solid #e9ecef;
+    padding-left: .6rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    font-size: .875rem;
+    display: block;
+  }
+  #cabinet-sidebar-notes ul > li > a.active,
+  .cabinet-notes-panel ul > li > a.active {
+    border-left: 1px solid maroon;
+    color: maroon !important;
   }
   .cabinet-notes-panel {
     position: fixed;
@@ -569,6 +622,33 @@ def inject_note_navigation(note: Note, notes: list[Note]) -> None:
     }
     #quarto-sidebar-toc-left {
       margin-left: 0;
+    }
+  }
+  @media print {
+    #cabinet-sidebar-notes,
+    #quarto-sidebar-toc-left,
+    #cabinet-floating-controls {
+      display: none !important;
+    }
+    /* Force white background for printing and remove decorative backgrounds */
+    html, body, main, .content, .quarto-banner-title-block, .cabinet-notes-panel, .sidebar {
+      background: white !important;
+      background-color: white !important;
+      -webkit-print-color-adjust: exact;
+      color-adjust: exact;
+    }
+    /* Remove background images, shadows, and heavy decorations */
+    * {
+      background-image: none !important;
+      box-shadow: none !important;
+    }
+    main {
+      margin-left: 0 !important;
+    }
+    /* Ensure links are legible in print */
+    a, a:link, a:visited {
+      color: black !important;
+      text-decoration: underline !important;
     }
   }
 </style>
@@ -721,7 +801,7 @@ def generate_index(notes: list[Note]) -> None:
       margin-left: 0;
     }}
     .home-notes {{
-      margin: 0 0 14px;
+      margin: 0 0 8px;
       padding: 0;
       list-style: none;
     }}
@@ -729,7 +809,7 @@ def generate_index(notes: list[Note]) -> None:
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 10px;
-      padding: 6px 0;
+      padding: 2px 0;
       color: inherit;
       text-decoration: none;
     }}
@@ -737,7 +817,7 @@ def generate_index(notes: list[Note]) -> None:
       color: var(--accent);
     }}
     .home-note span {{
-      font-size: 1.02rem;
+      font-size: 0.95rem;
     }}
     .home-note small {{
       align-self: center;
@@ -1200,9 +1280,10 @@ def generate_index(notes: list[Note]) -> None:
     (SITE_DIR / "index.html").write_text(page, encoding="utf-8")
 
 
-def build(slugs: list[str] | None = None, skip_render: bool = False) -> None:
+def build(slugs: list[str] | None = None, skip_render: bool = False, note_root: Path | None = None) -> None:
+    note_root = note_root or Path(".").resolve()
     selected = {normalize_note_path(slug) for slug in slugs or []}
-    notes = discover_notes()
+    notes = discover_notes(note_root)
     missing = selected.difference(note.slug for note in notes)
     if missing:
         raise SystemExit(f"Unknown note(s): {', '.join(sorted(missing))}")
@@ -1229,9 +1310,10 @@ def build(slugs: list[str] | None = None, skip_render: bool = False) -> None:
     print(f"Site written to {SITE_DIR}")
 
 
-def serve(port: int, host: str) -> None:
+def serve(port: int, host: str, note_root: Path | None = None) -> None:
+    note_root = note_root or Path(".").resolve()
     if not (SITE_DIR / "index.html").is_file():
-        build()
+        build(note_root=note_root)
 
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *args: object, **kwargs: object) -> None:
@@ -1246,38 +1328,42 @@ def serve(port: int, host: str) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Create, build, and serve a local Quarto note cabinet.")
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--root", default=".", help="note root directory (default: .)")
+
+    parser = argparse.ArgumentParser(description="Create, build, and serve a local Quarto note cabinet.", parents=[common])
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    new_parser = subparsers.add_parser("new", help="create a new note from template/")
+    new_parser = subparsers.add_parser("new", help="create a new note from template/", parents=[common])
     new_parser.add_argument("slug", help="URL-friendly note folder name")
     new_parser.add_argument("--title", help="note title; defaults to a title-cased slug")
     new_parser.add_argument("--author", default="Saaleh Poovathumkadavil", help="author name")
     new_parser.add_argument("--force", action="store_true", help="replace an existing note with the same slug")
 
-    build_parser = subparsers.add_parser("build", help="render notes and build site/")
+    build_parser = subparsers.add_parser("build", help="render notes and build site/", parents=[common])
     build_parser.add_argument("slugs", nargs="*", help="optional note slugs to render")
     build_parser.add_argument("--skip-render", action="store_true", help="rebuild site/ from existing rendered note output")
 
-    serve_parser = subparsers.add_parser("serve", help="serve site/ locally")
+    serve_parser = subparsers.add_parser("serve", help="serve site/ locally", parents=[common])
     serve_parser.add_argument("--port", type=int, default=8765)
     serve_parser.add_argument("--host", default="127.0.0.1")
 
-    list_parser = subparsers.add_parser("list", help="list available raw notes")
+    list_parser = subparsers.add_parser("list", help="list available notes", parents=[common])
     list_parser.set_defaults(command="list")
 
     args = parser.parse_args(argv)
+    note_root = Path(args.root).expanduser().resolve()
     if args.command == "new":
         note_path = normalize_note_path(args.slug)
         title = args.title or PurePosixPath(note_path).name.replace("-", " ").title()
-        target = copy_template(note_path, title, args.author, args.force)
-        print(f"Created {target.relative_to(ROOT)}")
+        target = copy_template(note_root, note_path, title, args.author, args.force)
+        print(f"Created {target}")
     elif args.command == "build":
-        build(args.slugs, args.skip_render)
+        build(args.slugs, args.skip_render, note_root)
     elif args.command == "serve":
-        serve(args.port, args.host)
+        serve(args.port, args.host, note_root)
     elif args.command == "list":
-        for note in discover_notes():
+        for note in discover_notes(note_root):
             print(f"{note.slug}\t{note.title}")
     return 0
 

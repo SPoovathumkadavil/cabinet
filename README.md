@@ -1,7 +1,7 @@
 
 # Typst Cabinet
 
-A local note cabinet where each note is a Quarto manuscript that renders to the same Tufte-inspired HTML style as the original `finrev` handout. Raw notes live in `raw/`, reusable note scaffolding lives in `template/`, and the compiled cabinet is written to `site/`.
+A local note cabinet where each note is a Quarto manuscript that renders to the same Tufte-inspired HTML style as the original `finrev` handout. Notes live under a configurable root directory, reusable note scaffolding lives in `template/`, and the compiled cabinet is written to `site/`.
 
 ## Requirements
 
@@ -14,8 +14,8 @@ A local note cabinet where each note is a Quarto manuscript that renders to the 
 ```text
 .
 ├── cabinet.py          # CLI for creating, building, and serving notes
-├── raw/                # source notes, organized as folder/folder/note
-│   └── finrev/
+├── statistics/         # source notes under the configured root
+│   └── probability/
 ├── template/           # copied by `cabinet.py new`
 └── site/               # generated static website
 ```
@@ -23,7 +23,7 @@ A local note cabinet where each note is a Quarto manuscript that renders to the 
 Each note folder is a standalone Quarto project. Notes may be nested:
 
 ```text
-raw/<folder>/<note>/
+<root>/<folder>/<note>/
 ├── _quarto.yml
 ├── index.qmd
 ├── references.bib
@@ -45,7 +45,9 @@ Create a new note from `template/`:
 python3 cabinet.py new stats/week-01/lecture-01 --title "Lecture 01"
 ```
 
-Edit the source at `raw/stats/week-01/lecture-01/index.qmd`.
+Commands accept `--root` and default to `.`.
+
+Edit the source at `stats/week-01/lecture-01/index.qmd`.
 
 Build the whole cabinet:
 
@@ -80,7 +82,7 @@ Use Obsidian-style wiki links inside `index.qmd` files:
 [[Lecture 01|stats/week-01/lecture-01]]
 ```
 
-The text before `|` is the visible label. The text after `|` is the note path under `raw/`, without `raw/` or `index.qmd`. Standard Obsidian order also works:
+The text before `|` is the visible label. The text after `|` is the note path under the configured root, without `index.qmd`. Standard Obsidian order also works:
 
 ```md
 [[stats/week-01/lecture-01|Lecture 01]]
@@ -98,7 +100,7 @@ During `python3 cabinet.py build`, `cabinet.py` temporarily preprocesses these l
 
 - The home page displays notes as a folder tree and includes a search bar.
 - The home page includes a wiki-link graph view with adjustable center, repel, link, and link-distance forces.
-- Notes directly under `raw/` are grouped under `Unmarked`.
+- Notes directly under the root are grouped under `Unmarked`.
 - Each rendered note gets a Home button.
 - Each rendered note gets a compact Contents-style notes list for the current note folder. On smaller screens, the list moves into the floating Notes menu beside Home.
 
@@ -106,10 +108,10 @@ During `python3 cabinet.py build`, `cabinet.py` temporarily preprocesses these l
 
 The repository includes a few sample nested notes for testing:
 
-- `raw/statistics/probability/bayes-review`
-- `raw/statistics/probability/random-variables`
-- `raw/statistics/regression/linear-models`
-- `raw/computing/r/vector-basics`
+- `statistics/probability/bayes-review`
+- `statistics/probability/random-variables`
+- `statistics/regression/linear-models`
+- `computing/r/vector-basics`
 
 These notes include abstracts and cross-links so the tree, note sidebars, and
 wiki-link preprocessor can be checked against realistic content.

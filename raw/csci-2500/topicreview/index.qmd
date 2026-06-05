@@ -1,0 +1,28 @@
+---
+title: "Topic Review"
+documenttype: Handout
+author:
+  - name: Saaleh Poovathumkadavil
+toc: true
+
+version: [v.1.0]
+date: last-modified
+execute:
+  echo: fenced
+  freeze: auto
+bibliography: references.bib
+bibliographystyle: "springer-humanities-author-date"
+format:
+  tufte-inspired-html: default
+  tufte-inspired-typst: default
+---
+
+
+# The great ideas of computing
+
+- Moore's Law
+- Prediction
+- Pipelining
+- Parallelism
+
+
