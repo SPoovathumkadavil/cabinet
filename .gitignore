@@ -1,8 +1,2 @@
 .DS_Store
 __pycache__/
-site/
-**/.quarto/
-**/_freeze/
-**/_manuscript/
-**/index.html
-**/index-meca.zip

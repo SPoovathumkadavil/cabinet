@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Typst Cabinet</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: FloralWhite;
+      --ink: #251d16;
+      --muted: #6d6258;
+      --accent: Maroon;
+      --rule: rgba(37, 29, 22, 0.18);
+    }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "ETBembo", "Palatino Linotype", Palatino, Georgia, serif;
+      line-height: 1.5;
+    }
+    main {
+      width: min(920px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 64px 0;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 4rem);
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+    .lede {
+      max-width: 54ch;
+      margin: 0 0 40px;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+    .search {
+      width: 100%;
+      box-sizing: border-box;
+      margin: 0 0 28px;
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      background: rgba(255, 255, 255, 0.34);
+      color: var(--ink);
+      font: inherit;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 240px;
+      gap: 48px;
+      align-items: start;
+    }
+    .note-tree {
+      padding: 0;
+    }
+    .home-folder {
+      margin: 0 0 20px;
+    }
+    .home-folder h2,
+    .home-folder h3,
+    .home-folder h4,
+    .home-folder h5,
+    .home-folder h6 {
+      margin: 0 0 8px;
+      text-align: left;
+      color: var(--ink);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+    .home-folder h2 {
+      font-size: 1.45rem;
+    }
+    .home-folder h3 {
+      font-size: 1.2rem;
+      margin-left: 0;
+    }
+    .home-folder h4,
+    .home-folder h5,
+    .home-folder h6 {
+      font-size: 1.05rem;
+      margin-left: 0;
+    }
+    .home-notes {
+      margin: 0 0 8px;
+      padding: 0;
+      list-style: none;
+    }
+    .home-note > a {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 2px 0;
+      color: inherit;
+      text-decoration: none;
+    }
+    .home-note > a:hover span:first-child {
+      color: var(--accent);
+    }
+    .home-note span {
+      font-size: 0.95rem;
+    }
+    .home-note small {
+      align-self: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+    .home-load-more {
+      margin: 0 0 14px;
+      padding: 4px 10px;
+      border: 1px solid var(--rule);
+      background: rgba(255, 255, 255, 0.35);
+      color: var(--ink);
+      font: inherit;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    .home-load-more:hover {
+      color: var(--accent);
+    }
+    .latest {
+      padding-left: 22px;
+    }
+    .latest h2 {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 400;
+    }
+    .latest ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .latest li {
+      display: grid;
+      gap: 2px;
+      margin-bottom: 14px;
+    }
+    .latest a {
+      color: var(--ink);
+      text-decoration: none;
+    }
+    .latest a:hover {
+      color: var(--accent);
+    }
+    .latest span {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .empty {
+      padding: 18px 0;
+      color: var(--muted);
+      border-bottom: 1px solid var(--rule);
+    }
+    .graph-section {
+      margin-top: 0;
+      border-top: 0;
+      padding-top: 12px;
+    }
+    .graph-section h2 {
+      margin: 0 0 8px;
+      color: var(--ink);
+      font-size: 1.35rem;
+      font-weight: 400;
+    }
+    .graph-section p {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .graph-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 14px;
+      align-items: start;
+    }
+    .graph-canvas {
+      width: 100%;
+      height: 420px;
+      border: 1px solid var(--rule);
+      background: var(--paper);
+      display: block;
+      cursor: grab;
+    }
+    .graph-canvas:active {
+      cursor: grabbing;
+    }
+    .graph-controls {
+      display: grid;
+      gap: 10px;
+    }
+    .graph-controls label {
+      display: grid;
+      gap: 4px;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .graph-controls .value {
+      color: var(--ink);
+      font-size: 0.84rem;
+    }
+    .graph-controls input {
+      width: 100%;
+    }
+    @media (max-width: 640px) {
+      main {
+        width: min(100vw - 28px, 920px);
+        padding: 36px 0;
+      }
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+      .latest {
+        border-left: 0;
+        padding-left: 0;
+      }
+      .note-tree {
+        padding: 0;
+      }
+      .home-note > a {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 4px 0;
+      }
+      .home-note small {
+        white-space: normal;
+      }
+      .graph-layout {
+        grid-template-columns: 1fr;
+      }
+      .graph-canvas {
+        height: 320px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Typst Cabinet</h1>
+    <p class="lede">A local cabinet of Quarto-Typst notes rendered with the same Tufte-inspired style as the source handouts.</p>
+    <input class="search" id="note-search" type="search" placeholder="Search notes" aria-label="Search notes">
+    <div class="layout">
+      <nav class="note-tree" aria-label="Notes">
+        <section class="home-folder depth-1" data-folder="hello">
+  <h3>Hello</h3>
+  <ul class="home-notes"><li class="home-note" data-search="an example note hello/ex saaleh poovathumkadavil">
+  <a href="hello/ex/index.html">
+    <span>An example note</span>
+    <small>hello/ex</small>
+  </a>
+</li></ul>
+
+</section>
+      </nav>
+      <aside class="latest" aria-label="Recently edited notes">
+        <h2>Recent</h2>
+        <ul>
+        <li><a href="hello/ex/index.html">An example note</a><span>Jun 7, 2026</span></li>
+        </ul>
+      </aside>
+    </div>
+    <section class="graph-section" aria-label="Wiki link graph">
+      <h2>Wiki Link Graph</h2>
+      <p>Explore how notes connect through wiki links. Tune forces to change the layout.</p>
+      <div class="graph-layout">
+        <canvas id="wiki-graph" class="graph-canvas" aria-label="Wiki link graph canvas"></canvas>
+        <form class="graph-controls" id="graph-controls">
+          <label>Center force <span class="value" id="center-force-value"></span><input id="center-force" type="range" min="0" max="1" step="0.01" value="0.23"></label>
+          <label>Repel force <span class="value" id="repel-force-value"></span><input id="repel-force" type="range" min="0" max="1" step="0.01" value="0.29"></label>
+          <label>Link force <span class="value" id="link-force-value"></span><input id="link-force" type="range" min="0" max="1" step="0.01" value="0.14"></label>
+          <label>Link distance <span class="value" id="link-distance-value"></span><input id="link-distance" type="range" min="0" max="1" step="0.01" value="0.42"></label>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script>
+    const search = document.getElementById('note-search');
+    const noteLists = Array.from(document.querySelectorAll('.home-notes'));
+    const visibleLimits = new Set();
+    const INITIAL_NOTES_PER_FOLDER = 100;
+    noteLists.forEach((list, index) => {
+      list.dataset.listId = String(index);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'home-load-more';
+      button.hidden = true;
+      button.dataset.forList = String(index);
+      button.addEventListener('click', () => {
+        visibleLimits.add(String(index));
+        applyHomeFilters();
+      });
+      list.insertAdjacentElement('afterend', button);
+    });
+    const applyHomeFilters = () => {
+      const value = search.value.trim().toLowerCase();
+      const searching = Boolean(value);
+      noteLists.forEach((list) => {
+        const listId = list.dataset.listId;
+        const expanded = visibleLimits.has(listId);
+        const items = Array.from(list.querySelectorAll(':scope > .home-note'));
+        const nextElement = list.nextElementSibling;
+        const loadMoreButton = nextElement?.classList.contains('home-load-more') ? nextElement : null;
+        let visibleCount = 0;
+        let hiddenByLimit = 0;
+        items.forEach((note) => {
+          const matches = !value || note.dataset.search.includes(value);
+          if (!matches) {
+            note.hidden = true;
+            return;
+          }
+          if (!searching && !expanded && visibleCount >= INITIAL_NOTES_PER_FOLDER) {
+            note.hidden = true;
+            hiddenByLimit += 1;
+            return;
+          }
+          note.hidden = false;
+          visibleCount += 1;
+        });
+        if (loadMoreButton) {
+          loadMoreButton.hidden = searching || expanded || hiddenByLimit === 0;
+          loadMoreButton.textContent = `+${hiddenByLimit}`;
+        }
+      });
+      document.querySelectorAll('.home-folder').forEach((folder) => {
+        const visibleNote = folder.querySelector('.home-note:not([hidden])');
+        const visibleSubfolder = folder.querySelector('.home-folder:not([hidden])');
+        folder.hidden = !visibleNote && !visibleSubfolder;
+      });
+    };
+    search.addEventListener('input', applyHomeFilters);
+    applyHomeFilters();
+    const graphData = {"nodes": [{"id": "hello/ex", "title": "An example note", "group": "hello"}], "links": []};
+    const canvas = document.getElementById('wiki-graph');
+    const controls = {
+      centerForce: document.getElementById('center-force'),
+      repelForce: document.getElementById('repel-force'),
+      linkForce: document.getElementById('link-force'),
+      linkDistance: document.getElementById('link-distance'),
+      centerForceValue: document.getElementById('center-force-value'),
+      repelForceValue: document.getElementById('repel-force-value'),
+      linkForceValue: document.getElementById('link-force-value'),
+      linkDistanceValue: document.getElementById('link-distance-value')
+    };
+    if (canvas && graphData.nodes.length) {
+      const ctx = canvas.getContext('2d');
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const byId = new Map();
+      const palette = ['#e7d4f5', '#d9e4ff', '#d7f2df', '#ffe4cf', '#f6d4dd', '#f9efc7'];
+      const hashColor = (value) => {
+        let hash = 0;
+        for (let i = 0; i < value.length; i += 1) hash = (hash * 31 + value.charCodeAt(i)) | 0;
+        return palette[Math.abs(hash) % palette.length];
+      };
+      const nodes = graphData.nodes.map((node, index) => {
+        const item = {
+          ...node,
+          x: 40 + (index * 17 % 420),
+          y: 40 + (index * 29 % 320),
+          vx: 0,
+          vy: 0,
+          radius: 7,
+          color: hashColor(node.group),
+          fixed: false
+        };
+        byId.set(node.id, item);
+        return item;
+      });
+      const links = graphData.links
+        .map((link) => ({ source: byId.get(link.source), target: byId.get(link.target) }))
+        .filter((link) => link.source && link.target);
+      let width = 0;
+      let height = 0;
+      let hoverNode = null;
+      let dragNode = null;
+      let suppressClick = false;
+      let dragStart = null;
+      const DRAG_CLICK_THRESHOLD_PX = 2;
+      const scales = {
+        centerForce: { min: 0, max: 0.08 },
+        repelForce: { min: 50, max: 3000 },
+        linkForce: { min: 0.01, max: 0.5 },
+        linkDistance: { min: 20, max: 260 }
+      };
+      const scaledParamValue = (key, value) => {
+        const range = scales[key];
+        return range.min + (range.max - range.min) * value;
+      };
+      const params = {
+        centerForce: scaledParamValue('centerForce', Number(controls.centerForce.value)),
+        repelForce: scaledParamValue('repelForce', Number(controls.repelForce.value)),
+        linkForce: scaledParamValue('linkForce', Number(controls.linkForce.value)),
+        linkDistance: scaledParamValue('linkDistance', Number(controls.linkDistance.value)),
+        damping: 0.86
+      };
+      const updateControlLabels = () => {
+        controls.centerForceValue.textContent = Number(controls.centerForce.value).toFixed(2);
+        controls.repelForceValue.textContent = Number(controls.repelForce.value).toFixed(2);
+        controls.linkForceValue.textContent = Number(controls.linkForce.value).toFixed(2);
+        controls.linkDistanceValue.textContent = Number(controls.linkDistance.value).toFixed(2);
+      };
+      const resize = () => {
+        const rect = canvas.getBoundingClientRect();
+        width = rect.width;
+        height = rect.height;
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      };
+      const findNode = (x, y) => {
+        let best = null;
+        let bestDist = Infinity;
+        for (const node of nodes) {
+          const dx = node.x - x;
+          const dy = node.y - y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < node.radius + 4 && dist < bestDist) {
+            best = node;
+            bestDist = dist;
+          }
+        }
+        return best;
+      };
+      const applyForces = () => {
+        const centerX = width / 2;
+        const centerY = height / 2;
+        for (let i = 0; i < nodes.length; i += 1) {
+          const a = nodes[i];
+          for (let j = i + 1; j < nodes.length; j += 1) {
+            const b = nodes[j];
+            let dx = b.x - a.x;
+            let dy = b.y - a.y;
+            const distSq = Math.max(25, dx * dx + dy * dy);
+            const dist = Math.sqrt(distSq);
+            dx /= dist;
+            dy /= dist;
+            const force = params.repelForce / distSq;
+            const fx = force * dx;
+            const fy = force * dy;
+            if (!a.fixed) {
+              a.vx -= fx;
+              a.vy -= fy;
+            }
+            if (!b.fixed) {
+              b.vx += fx;
+              b.vy += fy;
+            }
+          }
+        }
+        for (const link of links) {
+          const dx = link.target.x - link.source.x;
+          const dy = link.target.y - link.source.y;
+          const dist = Math.max(1, Math.hypot(dx, dy));
+          const stretch = dist - params.linkDistance;
+          const force = params.linkForce * stretch;
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          if (!link.source.fixed) {
+            link.source.vx += fx;
+            link.source.vy += fy;
+          }
+          if (!link.target.fixed) {
+            link.target.vx -= fx;
+            link.target.vy -= fy;
+          }
+        }
+        for (const node of nodes) {
+          if (node.fixed) continue;
+          node.vx += (centerX - node.x) * params.centerForce;
+          node.vy += (centerY - node.y) * params.centerForce;
+          node.vx *= params.damping;
+          node.vy *= params.damping;
+          node.x += node.vx;
+          node.y += node.vy;
+          node.x = Math.min(width - 10, Math.max(10, node.x));
+          node.y = Math.min(height - 10, Math.max(10, node.y));
+        }
+      };
+      const draw = () => {
+        ctx.clearRect(0, 0, width, height);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(37, 29, 22, 0.25)';
+        for (const link of links) {
+          ctx.beginPath();
+          ctx.moveTo(link.source.x, link.source.y);
+          ctx.lineTo(link.target.x, link.target.y);
+          ctx.stroke();
+        }
+        ctx.font = '12px "ETBembo", "Palatino Linotype", Palatino, Georgia, serif';
+        ctx.textBaseline = 'middle';
+        for (const node of nodes) {
+          ctx.beginPath();
+          ctx.fillStyle = node.color;
+          ctx.arc(node.x, node.y, node.radius + (node === hoverNode ? 1.5 : 0), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(37, 29, 22, 0.35)';
+          ctx.stroke();
+          ctx.fillStyle = '#251d16';
+          ctx.fillText(node.title, node.x + node.radius + 4, node.y);
+        }
+      };
+      const tick = () => {
+        applyForces();
+        draw();
+        window.requestAnimationFrame(tick);
+      };
+      const pointer = (event) => {
+        const rect = canvas.getBoundingClientRect();
+        return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      };
+      const distanceBetween = (from, to) => Math.hypot(to.x - from.x, to.y - from.y);
+      canvas.addEventListener('mousemove', (event) => {
+        const pos = pointer(event);
+        hoverNode = findNode(pos.x, pos.y);
+        if (dragNode) {
+          if (dragStart && distanceBetween(dragStart, pos) > DRAG_CLICK_THRESHOLD_PX) suppressClick = true;
+          dragNode.x = pos.x;
+          dragNode.y = pos.y;
+          dragNode.vx = 0;
+          dragNode.vy = 0;
+        }
+      });
+      canvas.addEventListener('mousedown', (event) => {
+        const pos = pointer(event);
+        suppressClick = false;
+        dragStart = pos;
+        dragNode = findNode(pos.x, pos.y);
+        if (dragNode) {
+          dragNode.fixed = true;
+          dragNode.x = pos.x;
+          dragNode.y = pos.y;
+        }
+      });
+      window.addEventListener('mouseup', () => {
+        if (dragNode) dragNode.fixed = false;
+        dragNode = null;
+        dragStart = null;
+      });
+      canvas.addEventListener('click', (event) => {
+        if (suppressClick) {
+          suppressClick = false;
+          return;
+        }
+        const pos = pointer(event);
+        const node = findNode(pos.x, pos.y);
+        if (node) window.location.href = `${node.id}/index.html`;
+      });
+      for (const [key, input] of Object.entries({
+        centerForce: controls.centerForce,
+        repelForce: controls.repelForce,
+        linkForce: controls.linkForce,
+        linkDistance: controls.linkDistance
+      })) {
+        input.addEventListener('input', () => {
+          params[key] = scaledParamValue(key, Number(input.value));
+          updateControlLabels();
+        });
+      }
+      updateControlLabels();
+      resize();
+      window.addEventListener('resize', resize);
+      tick();
+    }
+  </script>
+</body>
+</html>
